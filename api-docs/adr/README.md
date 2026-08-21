@@ -108,6 +108,7 @@ Statuses: **Proposed** (under discussion), **Accepted** (approved and/or impleme
 | [ADR-115](ADR-115-home-assistant-integration.md) | Home Assistant integration via MQTT auto-discovery + Matter bridge (HA-DISCO + HA-FABRIC + HA-MIND) | Accepted (MQTT track) / Proposed (Matter SDK P8b) |
 | [ADR-169](ADR-169-adam-mode-light-theme.md) | adam-mode — light theme toggle for the three.js realtime demo | Proposed |
 | [ADR-170](ADR-170-yoga-mode-pose-system.md) | yoga-mode — yoga pose detection, classification, and scoring for the three.js realtime demo | Proposed |
+| [ADR-324](ADR-324-off-axis-head-coupled-perspective-demo.md) | off-axis-mode — RF-assisted head-coupled perspective demo (clean-room Kooima projection; RF presence gating) | Proposed |
 
 ### Architecture and infrastructure
 
@@ -179,6 +180,7 @@ Statuses: **Proposed** (under discussion), **Accepted** (approved and/or impleme
 | [ADR-319](ADR-319-witness-chain.md) | Witness chain — staged, signed epistemic envelope | Accepted (phase 1) |
 | [ADR-320](ADR-320-sensor-hal.md) | RuView sensor HAL — abstract all sensing hardware to one Observation type | Proposed (phase 2) |
 | [ADR-321](ADR-321-decision-policy-action-authorization.md) | Decision policy — action authorization conditioned on certificate class, freshness, uncertainty, evidence | Accepted (phase 1) |
+| [ADR-323](ADR-323-native-rust-physics-constrained-pose-refinement.md) | Native Rust physics-constrained pose refinement | Proposed |
 
 ---
 
