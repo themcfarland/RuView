@@ -2,6 +2,10 @@
 
 Latest proposed decisions:
 
+- [ADR-367: Bounded research swarm and compute ownership](ADR-367-bounded-research-swarm-and-compute-ownership.md)
+- [ADR-366: CSI controls and frozen evaluation](ADR-366-csi-controls-and-frozen-evaluation.md)
+- [ADR-365: Public BFI dataset and decoder contract](ADR-365-public-bfi-dataset-and-decoder-contract.md)
+- [ADR-364: BFI capture admission and continuity](ADR-364-bfi-capture-admission-and-continuity.md)
 - [ADR-187: archive/v1 deprecation + model-weights honest labeling](ADR-187-archive-v1-deprecation-honest-labeling.md) (refs #509, #1125)
 - [ADR-186: Training progress API — wire the orphaned in-server trainer to /ws/train/progress](ADR-186-training-progress-api.md) (refs #1233)
 - [ADR-185: Python P6 SOTA bindings — AETHER, MERIDIAN, MAT](ADR-185-python-p6-sota-bindings.md)
@@ -9,7 +13,7 @@ Latest proposed decisions:
 - [ADR-264: Versioned wire protocol for RTL8720F CFR and Range-FFT reports](ADR-264-rtl8720f-radar-wire-protocol.md)
 - [ADR-263: Adopt RTL8720F 2.4 GHz FMCW radar as an optional RuView sensing platform](ADR-263-rtl8720f-2-4ghz-fmcw-radar-platform.md)
 
-This folder contains 210 Architecture Decision Records (ADRs) that document every significant technical choice in the RuView / WiFi-DensePose project. (The index tables below list a curated subset per domain; see the directory listing for the full set.)
+This folder records significant architectural choices in the RuView / WiFi-DensePose project. The index tables below list a curated subset per domain; see the directory listing for the full set.
 
 ## Why ADRs?
 
