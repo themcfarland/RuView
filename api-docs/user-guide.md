@@ -26,7 +26,12 @@ WiFi DensePose turns commodity WiFi signals into real-time human pose estimation
    - [Cognitum Seed Integration (ADR-069)](#cognitum-seed-integration-adr-069)
 5. [REST API Reference](#rest-api-reference)
 6. [WebSocket Streaming](#websocket-streaming)
-7. [Web UI](#web-ui)
+7. [RuView npm toolkit (`@ruvnet/ruview`)](#ruview-npm-toolkit-ruvnetruview)
+   - [Hardware from the command line](#hardware-from-the-command-line)
+   - [MCP for agents, ChatGPT and MCP Apps](#mcp-for-agents-chatgpt-and-mcp-apps)
+   - [Claude Code mod: live sensing pane](#claude-code-mod-live-sensing-pane)
+   - [Homecore and the vitals kernel](#homecore-and-the-vitals-kernel)
+8. [Web UI](#web-ui)
 8. [Vital Sign Detection](#vital-sign-detection)
 9. [CLI Reference](#cli-reference)
 10. [Observatory Visualization](#observatory-visualization)
@@ -451,8 +456,8 @@ authority. Versioned collections are `sites`, `buildings`, `floors`,
 The dependency-free contributor harness exposes the same read path:
 
 ```bash
-npx @ruvnet/ruview@0.5.0 spaces --resource alerts --limit 25
-npx @ruvnet/ruview@0.5.0 mcp start
+npx @ruvnet/ruview@0.9.1 spaces --resource alerts --limit 25
+npx @ruvnet/ruview@0.9.1 mcp start
 ```
 
 Its MCP tool is `ruview_spaces_list`. MCP reads are OAuth-only, use the fixed
@@ -955,6 +960,164 @@ RVAGENT_HTTP_TOKEN=secret npx @ruvnet/rvagent http --port 3001
 ```
 
 Source: [`tools/ruview-mcp/`](../tools/ruview-mcp/README.md). Tracking issue: [#787](https://github.com/ruvnet/RuView/issues/787). Full ADR: [ADR-124](adr/ADR-124-rvagent-mcp-ruvector-npm-integration.md).
+
+---
+
+## RuView npm toolkit (`@ruvnet/ruview`)
+
+`@ruvnet/ruview` is RuView's operator toolkit on npm. It has no runtime
+dependencies and runs on Node 20+. It is tested on Windows and Linux. One tool
+registry serves:
+- a CLI;
+- an MCP server (stdio, or HTTP for ChatGPT);
+- a typed SDK;
+- a Claude Code mod.
+
+Every result is honest about what it is:
+- **MEASURED** when it comes from live packets on your machine;
+- **SYNTHETIC** for simulators and self-tests;
+- **device-reported** for values a radar's own firmware computes, which are
+  not validated against a reference.
+
+```bash
+npx @ruvnet/ruview@0.9.1 --help
+npx @ruvnet/ruview@0.9.1 doctor          # what works on this machine, with fixes
+```
+
+In a terminal, commands print a formatted view. Pipes and `--json` print JSON,
+for scripts.
+
+### Hardware from the command line
+
+Run these on the machine the hardware is plugged into.
+
+```bash
+# What is plugged in (USB VID:PID → ESP32, Realtek RTL8721Dx, radar, LiDAR)
+npx @ruvnet/ruview@0.9.1 devices
+
+# CSI nodes streaming to this machine (UDP 5005): ESP32 ADR-018 frames and
+# Realtek RAC1 frames, per node rate, loss, RSSI and CSI shape
+npx @ruvnet/ruview@0.9.1 esp32 --seconds 10
+npx @ruvnet/ruview@0.9.1 esp32 --watch                 # live view, redrawn every few seconds
+npx @ruvnet/ruview@0.9.1 esp32 --seconds 45 --analyze  # live CSI through the vitals kernel
+
+# A board's serial console, without resetting it
+npx @ruvnet/ruview@0.9.1 monitor --port COM9
+npx @ruvnet/ruview@0.9.1 monitor --port COM10 --baud 1500000   # Realtek Ameba
+
+# 60 GHz / 24 GHz radar: raw UART, or an ESPHome kit on your network
+npx @ruvnet/ruview@0.9.1 mmwave --port COM5 --model auto
+npx @ruvnet/ruview@0.9.1 mmwave --source esphome --host 192.168.1.50
+
+# Flash ESP32 firmware: plan first, then write with --confirm (records boot evidence)
+npx @ruvnet/ruview@0.9.1 flash-plan --port COM16 --bundle firmware/esp32-csi-node/release_bins/c6-adr110 --variant c6
+npx @ruvnet/ruview@0.9.1 flash --port COM16 --bundle firmware/esp32-csi-node/release_bins/c6-adr110 --variant c6 --confirm
+```
+
+**What the alerts mean:**
+
+| Alert | Meaning |
+|---|---|
+| `heartbeat-only sender` | A board is alive but sends no CSI. On a Realtek board, run `monitor --baud 1500000`. If it shows `lack of csi buf`, the board ran out of CSI report buffers (`csi_buffer_starvation`). Reset it. |
+| `port_in_use` | The sensing server already holds UDP 5005. Stop it, or capture on another port your nodes target. |
+| `no_decodable_packets` | Packets arrived, but none were in a known RuView format. Check the sender. |
+| `seqReordered` / `seqStrays` | Out-of-order or stray sequence numbers. These are not counted as loss. |
+
+**ESPHome radar kits** (for example the Seeed MR60BHA2): the kit's firmware
+owns the radar, so read it over the network with `--source esphome`.
+- If the kit cannot join your WiFi, it starts a fallback hotspot. Join it and
+  set your network in its captive portal, at `http://192.168.4.1`.
+- Only private-network addresses are accepted.
+- Encrypted or password-protected ESPHome APIs are reported as unsupported.
+
+### MCP for agents, ChatGPT and MCP Apps
+
+```bash
+# Claude Code, Codex or any MCP client (stdio)
+claude mcp add ruview -- npx -y @ruvnet/ruview@0.9.1 mcp start
+
+# HTTP, for ChatGPT and remote clients
+export RUVIEW_MCP_TOKEN="$(node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))")"
+RUVIEW_MCP_GRANTS=device-access npx @ruvnet/ruview@0.9.1 mcp start --http --port 8790
+```
+
+**Connecting ChatGPT.** Clients that can send headers use
+`Authorization: Bearer <token>`. ChatGPT connectors cannot, so:
+1. Expose the port over HTTPS, with a tunnel or reverse proxy.
+2. Add `https://<your-host>/mcp/<token>` as the connector URL.
+
+**Least authority:**
+- Hardware tools need the `device-access` grant.
+- The HTTP transport binds to localhost by default.
+- It refuses unknown browser origins.
+- It never allows flashing or calibration, whatever grants are set.
+
+Node captures, radar reads, device scans and doctor results render in the
+**RuView console**: a widget that ChatGPT and other MCP Apps hosts show inline,
+with a Refresh button that re-runs the tool.
+
+### Claude Code mod: live sensing pane
+
+The package ships `ruview-live`, a Claude Code mod. `/ruview` opens a pane
+beside the conversation, refreshed on a timer, showing:
+- your CSI nodes;
+- an optional ESPHome radar;
+- alerts.
+
+It also keeps a status line such as `RuView · 2 nodes · radar present`.
+
+Keys `1`, `2` and `3` switch between three views (ADR-378):
+- **Overview**: the cards.
+- **CSI waterfall**: per-subcarrier amplitude over time, labelled MEASURED or
+  SYNTHETIC; `n` cycles nodes.
+- **Radar**: a range fan with an animated ping, plus heart, breathing and
+  distance charts. The values are device-reported and not validated, and the
+  kit reports range, not bearing.
+
+The two live views draw in terminal cells and animate in place.
+
+```bash
+npx @ruvnet/ruview@0.9.1 mod           # prints the mod's path in your install and how to load it
+claude --plugin-dir "<that path>"       # try it for one session
+# or from the RuView marketplace, inside Claude Code:
+#   /plugin marketplace add ruvnet/RuView
+#   /plugin install ruview-live@ruview
+```
+
+| In Claude Code | Does |
+|---|---|
+| `/ruview` | Open or close the pane |
+| `/ruview refresh` | Run one capture now; the result goes in the status line |
+| `/ruview off` | Close the pane |
+| `/ruview waterfall` / `/ruview radar` | Open on that view |
+
+**Settings** (`claude plugin configure ruview-live`): `udpPort`, `radarHost`,
+`refreshSeconds`, `captureSeconds` and `liveRefreshSeconds` (live views,
+default 4 s).
+
+The mod only runs the package's read-only CLI commands. Mods are early access:
+if `/ruview` is missing, start Claude Code with
+`CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`.
+
+### Homecore and the vitals kernel
+
+```bash
+npx homecore@0.1.0 guidance --topic plugins --query Wasmtime   # Homecore developer metaharness
+npx @ruvnet/ruview-kernel@0.1.0 selftest                       # vitals pipeline as WASM (SYNTHETIC self-test)
+```
+
+`esp32 --analyze` uses the kernel when it is installed. Its heart and breathing
+estimates carry "no reference measurement": they show the signal path works,
+not that the readings are accurate.
+
+Design records:
+- [ADR-373](adr/ADR-373-host-device-access-layer.md): device access;
+- [ADR-375](adr/ADR-375-ruview-mcp-apps-console-http-transport-and-terminal-ui.md):
+  MCP Apps console, HTTP transport and terminal UI;
+- [ADR-376](adr/ADR-376-ruview-umbrella-npm-package.md): the one-install
+  `ruview` package, pending the npm name;
+- [ADR-377](adr/ADR-377-ruview-live-claude-code-mod.md): the Claude Code mod.
+- [ADR-378](adr/ADR-378-ruview-live-showcase-views.md): the mod's CSI waterfall and radar views (keys 1/2/3, `esp32 --spectrum`).
 
 ---
 

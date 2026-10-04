@@ -2,6 +2,17 @@
 
 Latest proposed decisions:
 
+- [ADR-378: `ruview-live` showcase views — CSI waterfall, radar fan, animated cells](ADR-378-ruview-live-showcase-views.md)
+- [ADR-377: `ruview-live` — a Claude Code mod shipped inside `@ruvnet/ruview`](ADR-377-ruview-live-claude-code-mod.md)
+- [ADR-376: `ruview` — one npm install for every RuView component](ADR-376-ruview-umbrella-npm-package.md)
+- [ADR-375: MCP Apps console, HTTP transport and terminal UI for `@ruvnet/ruview`](ADR-375-ruview-mcp-apps-console-http-transport-and-terminal-ui.md)
+- [ADR-374: Remote host access over SSH (read-only)](ADR-374-remote-host-access-over-ssh.md)
+- [ADR-373: Host device access layer — ESP32, mmWave, LiDAR](ADR-373-host-device-access-layer.md)
+- [ADR-372: Structured debugging doctor](ADR-372-structured-debugging-doctor.md)
+- [ADR-371: Harness training runner and mean-pose evidence gate](ADR-371-harness-training-runner-and-evidence-gate.md)
+- [ADR-370: Cross-platform, verified ESP32 firmware flashing from npm](ADR-370-cross-platform-firmware-flashing.md)
+- [ADR-369: npm RuView operator surface — CLI, MCP, and SDK](ADR-369-ruview-npm-operator-surface-and-sdk.md)
+- [ADR-368: RuView compute kernel as a WASM + napi-rs npm package](ADR-368-ruview-kernel-wasm-napi-npm.md)
 - [ADR-367: Bounded research swarm and compute ownership](ADR-367-bounded-research-swarm-and-compute-ownership.md)
 - [ADR-366: CSI controls and frozen evaluation](ADR-366-csi-controls-and-frozen-evaluation.md)
 - [ADR-365: Public BFI dataset and decoder contract](ADR-365-public-bfi-dataset-and-decoder-contract.md)
